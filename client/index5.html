@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js'></script>
+<style type="text/css">
+
+  body {
+    font-family: 'arial', sans-serif;
+    font-size: 12px;
+    width:720px;
+  }
+
+  path {
+    stroke: steelblue;
+    stroke-width: 4px;
+    fill: none;
+  }
+
+  .income-value {
+    fill:steelblue;
+    stroke: #fff;
+  }
+
+  .axis text {
+    font-size: 12px;
+    fill: #777;
+  }
+
+  .axis path {
+    display: none;
+  }
+
+  .axis line {
+    stroke-width:1px;
+    stroke: #ccc;
+    stroke-dasharray: 2px 2px;
+  }
+
+  .axis .g-baseline line {
+    stroke: #000;
+    stroke-dasharray: 0;
+  }
+
+</style>
+
+<body>
+<div class="g-chart-container">
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+<script>
+
+  var margin = {top: 20, right: 100, bottom: 20, left: 10};
+
+  var width = 720 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+  var svg = d3.select(".g-chart-container").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var xScale = d3.scale.linear()
+    .range([0, width]);
+
+  var yScale = d3.scale.linear()
+    .range([height, 0]);
+
+  var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .tickSize(-height)
+    .tickPadding(8)
+    .tickFormat(d3.round)
+    .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("right")
+    .tickFormat(d3.format("$,"));
+
+  var line = d3.svg.line()
+    .x(function(d) { return xScale(d.year);})
+    .y(function(d) {return yScale(d.val);});
+
+  d3.csv('incomes.csv', ready);
+
+  function ready(err, data) {
+    if (err) { console.warn ("error loading data", err);}
+
+    data.forEach(function(d) {
+      d.year = +d.year;
+      d.val = +d.val;
+    });
+
+    var usMedian = data.filter(function(d) { return d.cutoff === 'cop50' && d.country === 'United States' });
+
+    xScale.domain(d3.extent(usMedian, function(d) { return d.year; }))
+
+    svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+    var valMin = d3.min(usMedian, function(d) {return d.val;})
+    var valMax = d3.max(usMedian, function(d) {return d.val;})
+    yScale.domain([0, valMax]);
+
+    var yAxisGroup = svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (width) + ",0)")
+      .call(yAxis)
+      .selectAll("g")
+      .classed("g-baseline", function(d) { console.log(d); return d === 0; });
+
+
+    var circle = svg.selectAll(".income-value")
+      .data(usMedian)
+      .enter()
+      .append("circle")
+      .attr("class", "income-value")
+      .attr("r", 5)
+      .attr("cx", function (d) {
+        return xScale(d.year);
+      })
+      .attr("cy", function (d) {
+        return yScale(d.val);
+      });
+
+    var usaLine = svg.append('path')
+      .datum(usMedian)
+      .attr("d", line);
+
+  }
+</script>

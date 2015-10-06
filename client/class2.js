@@ -1,42 +1,9 @@
-var data = [
-  {x: 10, y:	9.14},
-  {x: 8,	y:8.14},
-  {x: 13, y:	8.74},
-  {x: 9,	y:8.77},
-  {x: 11,y:9.26},
-  {x: 14,y:8.1},
-  {x:6, y:6.13},
-  {x:4, y:	3.1},
-  {x:12,y:9.13},
-  {x:7, y:	7.26},
-  {x:5, y:	4.74}
-];
+//JS to go here
 
-var width = 720;
-var height = 400;
-var margin = {top: 20, right: 10, bottom: 20, left: 10};
+var margin = {top: 20, right: 30, bottom: 30, left: 10};
 
-var width = 960 - margin.left - margin.right,
-  height = 500 - margin.top - margin.bottom;
-
-var xMin = d3.min(data, function (point) {
-  return point.x;
-});
-
-var xMax = d3.max(data, function (point) {
-  return point.x;
-});
-
-var yMin = d3.min(data, function (point) {
-  return point.y;
-});
-
-var yMax = d3.max(data, function (point) {
-  return point.y;
-});
-
-var xScale = d3.scale.linear().domain([0, xMax]).range([0, width]);
-var yScale = d3.scale.linear().domain([0, yMax]).range([height, 0]);
+var width = 720 - margin.left - margin.right,
+  height = 400 - margin.top - margin.bottom;
 
 var svg = d3.select("body").append("svg")
   .attr("width", width + margin.left + margin.right)
@@ -44,41 +11,56 @@ var svg = d3.select("body").append("svg")
   .append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var xAxis = d3.svg
-  .axis()
+var xScale = d3.scale.linear()
+  .range([0, width])
+  .domain([0, 15]);
+
+var yScale = d3.scale.linear()
+  .range([height,0])
+  .domain([0,12]);
+
+var xAxis = d3.svg.axis()
   .scale(xScale)
-  .orient('bottom');
+  .orient("bottom")
+  .tickValues([0,5,10,15])
 
-var yAxis = d3.svg
-  .axis()
+var yAxis = d3.svg.axis()
   .scale(yScale)
-  .orient('left');
+  .orient("right")
+  .tickSize(-width);
 
-svg.append("g")
-  .attr("transform", "translate(0," + height + ")")
-  .call(xAxis);
+var url = "https://raw.githubusercontent.com/thisismetis/data-visualization-with-d3/master/class1/quartet.tsv?token=AC7uVUyFXFImSgq7mMWGffhbcm2IWG2Cks5WCeC1wA%3D%3D";
+d3.tsv(url, ready);
 
-svg.append("g")
-  .attr("transform", "translate(" + width + ",0)")
-  .call(yAxis);
+var circleData = [];
 
-
-
-
-var circle = svg.selectAll('circle')
-  .data(data)
-  .enter()
-  .append('circle')
-  .attr({
-    cx: function(d) {
-      return xScale(d.x);
-    },
-    cy: function(d) {
-      return yScale(d.y)
-    },
-    r: function(d){
-      return 10;
-    }
-
+function ready(error, data) {
+  data.forEach(function(d) {
+    var temp = {x: d.x, y: d.y};
+    circleData.push(temp);
   });
+  render();
+}
+
+function render() {
+
+  var circle = svg.selectAll("circle")
+    .data(circleData)
+    .enter().append("circle")
+    .attr("r", 13)
+    .attr("cx", function (d) {
+      return xScale(d.x);
+    })
+    .attr("cy", function (d) {
+      return yScale(d.y);
+    });
+
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
+
+  svg.append("g")
+    .attr("transform", "translate(" + width + ",0)")
+    .call(yAxis);
+}
 
