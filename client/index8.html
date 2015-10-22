@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+  body {
+    font-family: 'arial', sans-serif;
+    font-size: 12px;
+    width:1050px;
+    margin: 20px auto;
+  }
+
+  svg {
+    border:1px solid #f0f;
+  }
+
+  .group-container {
+    display: inline-block;
+    text-align: center;
+    width: 800px;
+  }
+
+  .red-dots {
+    fill: red;
+  }
+
+  .axis line,
+  .axis path {
+    fill: none;
+    stroke: lightgrey;
+    shape-rendering: crispEdges;
+    stroke-dasharray: 2;
+  }
+  .tick text {
+    font-size: 9px;
+  }
+
+</style>
+
+<body>
+<div class="g-chart-container">
+</div>
+
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+
+
+<script>
+
+  var margin = {top: 20, right: 40, bottom: 20, left: 40};
+
+  var width = 800 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+  var yScale = d3.scale.linear()
+    .range([height, 0]);
+
+  var xScale = d3.scale.linear()
+    .range([0, width]);
+
+  var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .tickSize(height)
+    .tickPadding(8)
+    .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("left");
+  //    .tickFormat(d3.format("$,"));
+
+  d3.tsv("quartet.tsv", ready);
+
+  var svg, groupContainer;
+
+  function ready(err, data) {
+
+    if (err) throw err;
+
+    data.forEach(function(d) {
+      d.x = +d.x;
+      d.y = +d.y;
+    });
+
+    var dataByGroup = d3.nest()
+      .key(function(d) { return d.group; })
+      .entries(data);
+
+    dataByGroup.forEach(function(d) {
+      d.xAverage = d3.mean(d.values, function(d) {return d.x;});
+      d.yAverage = d3.mean(d.values, function(d) {return d.y;});
+   //   renderEachPlot(d);
+    });
+
+    var buttons = d3.select("body").selectAll('button')
+      .data(["I", "II", "III", "IV"])
+      .enter()
+      .append("button")
+      .text(function(d) { return "Group " + d;})
+      .on("click", function(d) {
+        var index;
+        switch(d) {
+          case "I" : index = 0;
+            break;
+          case "II": index = 1;
+            break;
+          case "III": index = 2;
+            break;
+          case "IV" : index = 4;
+            break;
+        }
+        render(dataByGroup[index]);
+      });
+
+
+
+  }
+
+  function render(group) {
+
+    var myNode = document.getElementsByTagName("body");
+    while (myNode.firstChild) {
+      myNode.removeChild(myNode.firstChild);
+    }
+
+    document.body.innerHTML += '<div class="g-chart-container';
+
+
+    var groupContainer = d3.select(".g-chart-container").append('div')
+      .attr("class", "group-container");
+
+    var svg = groupContainer.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    var buttons = d3.select("body").selectAll('button')
+      .data(["I", "II", "III", "IV"])
+      .enter()
+      .append("button")
+      .text(function(d) { return "Group " + d;})
+      .on("click", function(d) {
+        var index;
+        switch(d) {
+          case "I" : index = 0;
+            break;
+          case "II": index = 1;
+            break;
+          case "III": index = 2;
+            break;
+          case "IV" : index = 4;
+            break;
+        }
+        render(dataByGroup[index]);
+      });
+
+
+
+    groupContainer.append("h2")
+      .text(group.key)
+      .attr('text-align', 'center');
+
+    groupContainer.append("h5")
+      .text('Average x:' + d3.round(group.xAverage, 2) + ' ' + 'Average y:' + d3.round(group.yAverage, 2));
+
+    xScale.domain(d3.extent(group.values, function(d) { return d.x; }));
+    yScale.domain(d3.extent(group.values, function(d) { return d.y; }));
+
+    svg.append("g")
+      .attr("class", "x axis")
+      .call(xAxis);
+
+    svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+    //here is your data join.
+    var circleGroup = svg.selectAll(".anscombe-circle-group")
+      .data(group.values)
+      .enter()
+      .append("g")
+      .attr("class", "anscombe-circle-group")
+      .attr('transform', function(d) {
+        return "translate(" + xScale(d.x) + "," + yScale(d.y) + ")";
+      });
+
+    circleGroup.append("circle")
+      .attr("r", 5)
+      .classed("red-dots", true);
+
+    circleGroup.append("text")
+      .text(function(d) { return "(" + d.x + "," + d.y + ")"; })
+      .attr("dx", 3)
+      .attr("font-size", '8px');
+
+  }
+
+</script>

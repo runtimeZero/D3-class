@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+ .clim-div {
+   fill: grey;
+   stroke-width: 3;
+ }
+</style>
+
+
+<body>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+
+<script>
+
+  var height = 500, width = 1050;
+
+  var path = d3.geo.path();
+  var svg = d3
+    .select("body")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  var color = d3.scale.threshold()
+    .domain([-7,-3, -2, -1, 0 , 1, 2, 3, 8])
+    .range(["Red", "DarkOrange", "Orange", "Yellow" , "lightgrey", "SpringGreen","MediumSpringGreen", "PaleGreen ", "SeaGreen"]);
+
+  queue()
+    .defer(d3.json, "/climate/GIS.OFFICIAL_CLIM_DIVISIONS.json")
+    .defer(d3.csv, "/climate/tide-drought-data.csv", cleanDroughtData)
+    .await(ready);
+
+  function cleanDroughtData(d) {
+    if (d.year === "2013") {
+      d.id = +d.id;
+      d.val = +d.val;
+      d.year = +d.year;
+      return d;
+    }
+  }
+
+
+
+  function ready(err, us, drought) {
+    if (err) console.warn("error", err);
+
+    var tj = topojson.feature(us, us.objects.GIS).features;
+
+    var droughtIndexForDivision = {};
+    drought.forEach(function(d) {
+      droughtIndexForDivision[d.id] = d.val;
+    });
+
+    //color.domain(d3.extent(drought, function(d) { return d.val; }));
+
+    var climateDivision = svg.selectAll(".clim-div")
+      .data(tj)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .attr("class", "clim-div")
+      .style("fill", function(d) {
+         var severity = droughtIndexForDivision[d.properties.CLIMDIV];
+        return color(severity);
+      })
+  }
+
+</script>

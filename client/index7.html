@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js'></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+  <style type="text/css">
+
+  </style>
+</head>
+
+<body>
+  <div class="g-chart-container"> </div>
+</body>
+
+<script>
+
+  // station 1
+  d3.tsv("jobs.csv", ready);
+
+  function ready(err, data) {
+    if (err) { throw err;}
+
+    data.forEach(function(d) {
+      var myDate = moment(d.month_year, "MM-YYYY");
+      d.month = myDate.month();
+      d.year = myDate.year();
+    });
+
+    console.log(data);
+  }
+
+</script>
