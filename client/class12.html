@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style type="text/css">
+
+  body {
+    font-family: 'arial', sans-serif;
+    font-size: 12px;
+    width:1050px;
+    margin: 20px auto;
+  }
+
+  svg {
+    border:1px solid #f0f;
+  }
+
+  .group-container {
+    display: inline-block;
+    width: 250px;
+  }
+
+  .red-dots {
+    fill: red;
+  }
+  .red-circle-group{
+    fill: red;
+  }
+  .yellow-circle-group {
+    fill: yellow;
+  }
+  .blue-circle-group {
+    fill: blue;
+  }
+  .green-circle-group {
+    fill: green;
+  }
+
+  .axis line,
+  .axis path {
+    fill: none;
+    stroke: lightgrey;
+    shape-rendering: crispEdges;
+    stroke-dasharray: 2;
+  }
+  .tick text {
+    font-size: 9px;
+  }
+</style>
+
+<body>
+<h1>Median incomes from 1980 to 2010</h1>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+
+<script type="text/javascript">
+
+  var margin = {top: 20, right: 10, bottom: 20, left: 50};
+
+  var width = 1050 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+  var xScale = d3.scale.linear()
+    .range([0,width]);
+
+  var yScale = d3.scale.linear()
+    .range([height,0]);
+
+  var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .tickSize(height)
+    .tickPadding(8)
+    .tickFormat(d3.round)
+    .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .tickSize(-width)
+    .tickPadding(8)
+    .orient("left")
+    .tickFormat(d3.format("$,"));
+
+  var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  d3.tsv("quartet.tsv", ready);
+
+  function ready(error, data) {
+    if (error) return console.warn(error);
+
+    data.forEach(function(d) {
+      d.x = +d.x;
+      d.y = +d.y;
+    });
+
+
+    var dataByGroup = d3.nest()
+      .key(function(d) { return d.group; })
+      .entries(data);
+
+    xScale.domain(d3.extent(data, function(d) { return d.x; }));
+    yScale.domain(d3.extent(data, function(d) { return d.y; }));
+
+    svg.append("g")
+      .attr("class", "x axis")
+      .call(xAxis);
+
+    svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+    //here is your data join.
+    var circleGroup = svg.selectAll(".anscombe-circle-group")
+      .data(data)
+      .enter()
+      .append("g")
+      .attr("class", function(d) {
+        switch(d.group) {
+          case 'I': return 'red-circle-group';
+                    break;
+          case 'II': return 'blue-circle-group';
+            break;
+          case 'III': return 'yellow-circle-group';
+            break;
+          case 'IV': return 'green-circle-group';
+            break;
+
+        }
+      })
+      .attr('transform', function(d) {
+        return "translate(" + xScale(d.x) + "," + yScale(d.y) + ")";
+      });
+
+
+    circleGroup.append("circle")
+      .attr("r", 5);
+
+  }
+
+
+</script>
+
